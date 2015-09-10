@@ -13,7 +13,6 @@ class Disk:
         :type size: int
         '''
 
-        assert isinstance(size, int)
         assert size > 0
 
         self._size = size
@@ -83,6 +82,35 @@ class Peg:
             raise Exception('disk must be smaller than top disk')
 
         self._stack.append(disk)
+
+class Solver:
+    '''
+    Solver the three-peg Tower of Hanoi puzzle.
+    '''
+
+    def move(self, disk_count, source_peg, destination_peg, alternate_peg):
+        '''
+        Moves the specified count of disks from the source peg to the
+        destination peg.
+
+        :param disk_count: The count of disks to move; must be positive.
+        :type disk_count: int
+        :param source_peg: The peg containing the disks to move.
+        :type source_peg: Peg
+        :param destination_peg: The peg to which the disks will be moved.
+        :type destination_peg: Peg
+        :param alternate_peg: The peg to be used to facilitate the move
+            according to the puzzle rules.
+        :type alternate_peg: Peg
+        '''
+
+        assert disk_count > 0
+
+        if disk_count > 1:
+            self.move(disk_count - 1, source_peg, alternate_peg, destination_peg)
+        destination_peg.push(source_peg.pop())
+        if disk_count > 1:
+            self.move(disk_count - 1, alternate_peg, destination_peg, source_peg)
 
 if __name__ == '__main__':
     print('TODO')

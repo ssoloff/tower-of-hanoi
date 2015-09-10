@@ -1,6 +1,6 @@
 import unittest
 
-from tower_of_hanoi_recursive import Disk, Peg
+from tower_of_hanoi_recursive import Disk, Peg, Solver
 
 class DiskTestCase(unittest.TestCase):
     def test____lt____when_self_equals_other__returns_false(self):
@@ -76,6 +76,65 @@ class PegTestCase(unittest.TestCase):
 
         with self.assertRaises(Exception):
             self._peg.push(self._disk_2)
+
+class SolverTestCase(unittest.TestCase):
+    def setUp(self):
+        self._disk_1 = Disk(1)
+        self._disk_2 = Disk(2)
+        self._disk_3 = Disk(3)
+        self._disk_4 = Disk(4)
+        self._peg_a = Peg()
+        self._peg_b = Peg()
+        self._peg_c = Peg()
+        self._solver = Solver()
+
+    def test__move__when_disk_count_is_1__moves_disks_from_peg_a_to_peg_c(self):
+        self._peg_a.push(self._disk_1)
+
+        self._solver.move(1, self._peg_a, self._peg_c, self._peg_b)
+
+        self.assertEqual([], self._peg_a.disks())
+        self.assertEqual([], self._peg_b.disks())
+        self.assertEqual([self._disk_1], self._peg_c.disks())
+
+    def test__move__when_disk_count_is_2__moves_disks_from_peg_a_to_peg_c(self):
+        self._peg_a.push(self._disk_2)
+        self._peg_a.push(self._disk_1)
+
+        self._solver.move(2, self._peg_a, self._peg_c, self._peg_b)
+
+        self.assertEqual([], self._peg_a.disks())
+        self.assertEqual([], self._peg_b.disks())
+        self.assertEqual([self._disk_2, self._disk_1], self._peg_c.disks())
+
+    def test__move__when_disk_count_is_3__moves_disks_from_peg_a_to_peg_c(self):
+        self._peg_a.push(self._disk_3)
+        self._peg_a.push(self._disk_2)
+        self._peg_a.push(self._disk_1)
+
+        self._solver.move(3, self._peg_a, self._peg_c, self._peg_b)
+
+        self.assertEqual([], self._peg_a.disks())
+        self.assertEqual([], self._peg_b.disks())
+        self.assertEqual([self._disk_3, self._disk_2, self._disk_1], self._peg_c.disks())
+
+    def test__move__when_disk_count_is_4__moves_disks_from_peg_a_to_peg_c(self):
+        self._peg_a.push(self._disk_4)
+        self._peg_a.push(self._disk_3)
+        self._peg_a.push(self._disk_2)
+        self._peg_a.push(self._disk_1)
+
+        self._solver.move(4, self._peg_a, self._peg_c, self._peg_b)
+
+        self.assertEqual([], self._peg_a.disks())
+        self.assertEqual([], self._peg_b.disks())
+        self.assertEqual([self._disk_4, self._disk_3, self._disk_2, self._disk_1], self._peg_c.disks())
+
+    def test__move__when_disk_count_exceeds_source_peg_disk_count__raises_exception(self):
+        self._peg_a.push(self._disk_1)
+
+        with self.assertRaises(Exception):
+            self._solver.move(2, self._peg_a, self._peg_c, self._peg_b)
 
 if __name__ == '__main__':
     unittest.main()
