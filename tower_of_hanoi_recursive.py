@@ -20,6 +20,15 @@ class Disk:
     def __lt__(self, other):
         return self._size < other._size
 
+    def size(self):
+        '''
+        Returns the size of the disk.
+
+        :returns: The size of the disk.
+        '''
+
+        return self._size
+
 class Peg:
     '''
     A peg upon which disks are stacked in the Tower of Hanoi game.
@@ -99,10 +108,31 @@ class Peg:
 
         self._stack.append(disk)
 
-class Solver:
+class Game:
     '''
-    Solver the three-peg Tower of Hanoi puzzle.
+    Facade for the three-peg Tower of Hanoi game.
     '''
+
+    def create_peg(self, name, disk_count=0):
+        ''''
+        Returns a new peg with the specified name and containing the specified
+        number of disks in descending order of size from the bottom to the top.
+
+        :param name: The peg name.
+        :type name: str
+        :param disk_count: The number of disks to add to the peg; must not be
+            negative.
+        :type disk_count: int
+
+        :returns: A new peg.
+        '''
+
+        assert disk_count >= 0
+
+        peg = Peg(name)
+        for disk_size in range(disk_count, 0, -1):
+            peg.push(Disk(disk_size))
+        return peg
 
     def move(self, disk_count, source_peg, destination_peg, intermediate_peg, callback=(lambda *args, **kwargs: None)):
         '''
@@ -116,7 +146,7 @@ class Solver:
         :param destination_peg: The peg to which the disks will be moved.
         :type destination_peg: Peg
         :param intermediate_peg: The peg to be used to facilitate the move
-            according to the puzzle rules.
+            according to the game rules.
         :type intermediate_peg: Peg
         :param callback: The optional callback to be invoked *after* each disk
             is moved.  The callback will receive a sequence of all pegs in no
@@ -133,4 +163,28 @@ class Solver:
             self.move(disk_count - 1, intermediate_peg, destination_peg, source_peg, callback)
 
 if __name__ == '__main__':
-    print('TODO')
+    import sys
+
+    if len(sys.argv) != 2:
+        print('usage: {0} <disk_count>'.format(sys.argv[0]))
+        sys,exit(1)
+
+    disk_count = int(sys.argv[1])
+    assert disk_count > 0
+
+    game = Game()
+    peg_a = game.create_peg('A', disk_count)
+    peg_b = game.create_peg('B')
+    peg_c = game.create_peg('C')
+
+    def print_peg(peg):
+        print('{0}: {1}'.format(peg.name(), ' - '.join([str(disk.size()) for disk in peg.disks()])))
+
+    def print_pegs(*args):
+        print('==========')
+        print_peg(peg_a)
+        print_peg(peg_b)
+        print_peg(peg_c)
+
+    print_pegs() # display initial state
+    game.move(disk_count, peg_a, peg_c, peg_b, print_pegs)

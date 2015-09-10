@@ -1,6 +1,6 @@
 import unittest
 
-from tower_of_hanoi_recursive import Disk, Peg, Solver
+from tower_of_hanoi_recursive import Disk, Game, Peg
 
 class DiskTestCase(unittest.TestCase):
     def test____lt____when_self_equals_other__returns_false(self):
@@ -77,23 +77,21 @@ class PegTestCase(unittest.TestCase):
         with self.assertRaises(Exception):
             self._peg.push(self._disk_2)
 
-class SolverTestCase(unittest.TestCase):
+class GameTestCase(unittest.TestCase):
     class _MoveSpy:
         '''
         A test spy that can be passed as the `callback` parameter of the
-        `Solver.move` method.
+        `Game.move` method.
 
-        After `Solver.move` returns, the `disks_by_peg_name_for_each_call`
+        After `Game.move` returns, the `disks_by_peg_name_for_each_call`
         attribute will contain the complete history of each peg's content after
-        each of solver's moves.
+        each move.
         '''
 
         def __init__(self):
-            print('_MoveSpy.__init__')
             self.disks_by_peg_name_for_each_call = []
 
         def __call__(self, *args, **kwargs):
-            print('_MoveSpy.__call__')
             pegs = args[0]
             disks_by_peg_name = {peg.name(): peg.disks() for peg in pegs}
             self.disks_by_peg_name_for_each_call.append(disks_by_peg_name)
@@ -106,13 +104,35 @@ class SolverTestCase(unittest.TestCase):
         self._peg_a = Peg('a')
         self._peg_b = Peg('b')
         self._peg_c = Peg('c')
-        self._solver = Solver()
+        self._game = Game()
+
+    def test__create_peg__returns_peg_with_specified_name(self):
+        name = 'name'
+
+        peg = self._game.create_peg(name)
+
+        self.assertEqual(name, peg.name())
+
+    def test__create_peg__when_disk_count_is_0__returns_empty_peg(self):
+        peg = self._game.create_peg('name', 0)
+
+        self.assertTrue(peg.is_empty())
+
+    def test__create_peg__when_disk_count_is_1__returns_peg_with_1_disk(self):
+        peg = self._game.create_peg('name', 1)
+
+        self.assertEqual([1], [disk.size() for disk in peg.disks()])
+
+    def test__create_peg__when_disk_count_is_3__returns_peg_with_3_disks_in_ascending_order_from_top(self):
+        peg = self._game.create_peg('name', 3)
+
+        self.assertEqual([3, 2, 1], [disk.size() for disk in peg.disks()])
 
     def test__move__when_disk_count_is_1__invokes_callback_after_each_move(self):
-        move_spy = SolverTestCase._MoveSpy()
+        move_spy = GameTestCase._MoveSpy()
         self._peg_a.push(self._disk_1)
 
-        self._solver.move(1, self._peg_a, self._peg_c, self._peg_b, move_spy)
+        self._game.move(1, self._peg_a, self._peg_c, self._peg_b, move_spy)
 
         expected_disks_by_peg_name_for_each_call = [
             {
@@ -123,21 +143,21 @@ class SolverTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected_disks_by_peg_name_for_each_call, move_spy.disks_by_peg_name_for_each_call)
 
-    def test__move__when_disk_coselfunt_is_1__moves_disks_from_peg_a_to_peg_c(self):
+    def test__move__when_disk_count_is_1__moves_disks_from_peg_a_to_peg_c(self):
         self._peg_a.push(self._disk_1)
 
-        self._solver.move(1, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(1, self._peg_a, self._peg_c, self._peg_b)
 
         self.assertEqual([], self._peg_a.disks())
         self.assertEqual([], self._peg_b.disks())
         self.assertEqual([self._disk_1], self._peg_c.disks())
 
     def test__move__when_disk_count_is_2__invokes_callback_after_each_move(self):
-        move_spy = SolverTestCase._MoveSpy()
+        move_spy = GameTestCase._MoveSpy()
         self._peg_a.push(self._disk_2)
         self._peg_a.push(self._disk_1)
 
-        self._solver.move(2, self._peg_a, self._peg_c, self._peg_b, move_spy)
+        self._game.move(2, self._peg_a, self._peg_c, self._peg_b, move_spy)
 
         expected_disks_by_peg_name_for_each_call = [
             {
@@ -162,7 +182,7 @@ class SolverTestCase(unittest.TestCase):
         self._peg_a.push(self._disk_2)
         self._peg_a.push(self._disk_1)
 
-        self._solver.move(2, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(2, self._peg_a, self._peg_c, self._peg_b)
 
         self.assertEqual([], self._peg_a.disks())
         self.assertEqual([], self._peg_b.disks())
@@ -173,7 +193,7 @@ class SolverTestCase(unittest.TestCase):
         self._peg_a.push(self._disk_2)
         self._peg_a.push(self._disk_1)
 
-        self._solver.move(3, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(3, self._peg_a, self._peg_c, self._peg_b)
 
         self.assertEqual([], self._peg_a.disks())
         self.assertEqual([], self._peg_b.disks())
@@ -185,7 +205,7 @@ class SolverTestCase(unittest.TestCase):
         self._peg_a.push(self._disk_2)
         self._peg_a.push(self._disk_1)
 
-        self._solver.move(4, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(4, self._peg_a, self._peg_c, self._peg_b)
 
         self.assertEqual([], self._peg_a.disks())
         self.assertEqual([], self._peg_b.disks())
@@ -195,7 +215,7 @@ class SolverTestCase(unittest.TestCase):
         self._peg_a.push(self._disk_1)
 
         with self.assertRaises(Exception):
-            self._solver.move(2, self._peg_a, self._peg_c, self._peg_b)
+            self._game.move(2, self._peg_a, self._peg_c, self._peg_b)
 
 if __name__ == '__main__':
     unittest.main()
