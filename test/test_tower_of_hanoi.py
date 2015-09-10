@@ -1,6 +1,6 @@
 import unittest
 
-from tower_of_hanoi_recursive import Disk, Game, Peg
+from tower_of_hanoi import Disk, Game, Peg
 
 class DiskTestCase(unittest.TestCase):
     def test____lt____when_self_equals_other__returns_false(self):
