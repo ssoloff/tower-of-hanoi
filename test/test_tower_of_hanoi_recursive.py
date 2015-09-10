@@ -17,7 +17,7 @@ class PegTestCase(unittest.TestCase):
         self._disk_1 = Disk(1)
         self._disk_2 = Disk(2)
         self._disk_3 = Disk(3)
-        self._peg = Peg()
+        self._peg = Peg('name')
 
     def test__disks__returns_copy(self):
         disks = self._peg.disks()
@@ -78,17 +78,52 @@ class PegTestCase(unittest.TestCase):
             self._peg.push(self._disk_2)
 
 class SolverTestCase(unittest.TestCase):
+    class _MoveSpy:
+        '''
+        A test spy that can be passed as the `callback` parameter of the
+        `Solver.move` method.
+
+        After `Solver.move` returns, the `disks_by_peg_name_for_each_call`
+        attribute will contain the complete history of each peg's content after
+        each of solver's moves.
+        '''
+
+        def __init__(self):
+            print('_MoveSpy.__init__')
+            self.disks_by_peg_name_for_each_call = []
+
+        def __call__(self, *args, **kwargs):
+            print('_MoveSpy.__call__')
+            pegs = args[0]
+            disks_by_peg_name = {peg.name(): peg.disks() for peg in pegs}
+            self.disks_by_peg_name_for_each_call.append(disks_by_peg_name)
+
     def setUp(self):
         self._disk_1 = Disk(1)
         self._disk_2 = Disk(2)
         self._disk_3 = Disk(3)
         self._disk_4 = Disk(4)
-        self._peg_a = Peg()
-        self._peg_b = Peg()
-        self._peg_c = Peg()
+        self._peg_a = Peg('a')
+        self._peg_b = Peg('b')
+        self._peg_c = Peg('c')
         self._solver = Solver()
 
-    def test__move__when_disk_count_is_1__moves_disks_from_peg_a_to_peg_c(self):
+    def test__move__when_disk_count_is_1__invokes_callback_after_each_move(self):
+        move_spy = SolverTestCase._MoveSpy()
+        self._peg_a.push(self._disk_1)
+
+        self._solver.move(1, self._peg_a, self._peg_c, self._peg_b, move_spy)
+
+        expected_disks_by_peg_name_for_each_call = [
+            {
+                self._peg_a.name(): [],
+                self._peg_b.name(): [],
+                self._peg_c.name(): [self._disk_1]
+            }
+        ]
+        self.assertEqual(expected_disks_by_peg_name_for_each_call, move_spy.disks_by_peg_name_for_each_call)
+
+    def test__move__when_disk_coselfunt_is_1__moves_disks_from_peg_a_to_peg_c(self):
         self._peg_a.push(self._disk_1)
 
         self._solver.move(1, self._peg_a, self._peg_c, self._peg_b)
@@ -96,6 +131,32 @@ class SolverTestCase(unittest.TestCase):
         self.assertEqual([], self._peg_a.disks())
         self.assertEqual([], self._peg_b.disks())
         self.assertEqual([self._disk_1], self._peg_c.disks())
+
+    def test__move__when_disk_count_is_2__invokes_callback_after_each_move(self):
+        move_spy = SolverTestCase._MoveSpy()
+        self._peg_a.push(self._disk_2)
+        self._peg_a.push(self._disk_1)
+
+        self._solver.move(2, self._peg_a, self._peg_c, self._peg_b, move_spy)
+
+        expected_disks_by_peg_name_for_each_call = [
+            {
+                self._peg_a.name(): [self._disk_2],
+                self._peg_b.name(): [self._disk_1],
+                self._peg_c.name(): []
+            },
+            {
+                self._peg_a.name(): [],
+                self._peg_b.name(): [self._disk_1],
+                self._peg_c.name(): [self._disk_2]
+            },
+            {
+                self._peg_a.name(): [],
+                self._peg_b.name(): [],
+                self._peg_c.name(): [self._disk_2, self._disk_1]
+            }
+        ]
+        self.assertEqual(expected_disks_by_peg_name_for_each_call, move_spy.disks_by_peg_name_for_each_call)
 
     def test__move__when_disk_count_is_2__moves_disks_from_peg_a_to_peg_c(self):
         self._peg_a.push(self._disk_2)

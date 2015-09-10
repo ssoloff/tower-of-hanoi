@@ -27,7 +27,14 @@ class Peg:
     Disks may only be stacked in order of decreasing size.
     '''
 
-    def __init__(self):
+    def __init__(self, name):
+        '''
+        Initializes a new instance of the `Peg' class.
+
+        :param name: The peg name.
+        '''
+
+        self._name = name
         self._stack = []
 
     def _is_smaller_than_top_disk(self, disk):
@@ -53,6 +60,15 @@ class Peg:
         '''
 
         return len(self._stack) == 0
+
+    def name(self):
+        '''
+        Gets the peg name.
+
+        :returns: The peg name.
+        '''
+
+        return self._name
 
     def pop(self):
         '''
@@ -88,7 +104,7 @@ class Solver:
     Solver the three-peg Tower of Hanoi puzzle.
     '''
 
-    def move(self, disk_count, source_peg, destination_peg, alternate_peg):
+    def move(self, disk_count, source_peg, destination_peg, intermediate_peg, callback=(lambda *args, **kwargs: None)):
         '''
         Moves the specified count of disks from the source peg to the
         destination peg.
@@ -99,18 +115,22 @@ class Solver:
         :type source_peg: Peg
         :param destination_peg: The peg to which the disks will be moved.
         :type destination_peg: Peg
-        :param alternate_peg: The peg to be used to facilitate the move
+        :param intermediate_peg: The peg to be used to facilitate the move
             according to the puzzle rules.
-        :type alternate_peg: Peg
+        :type intermediate_peg: Peg
+        :param callback: The optional callback to be invoked *after* each disk
+            is moved.  The callback will receive a sequence of all pegs in no
+            particular order.
         '''
 
         assert disk_count > 0
 
         if disk_count > 1:
-            self.move(disk_count - 1, source_peg, alternate_peg, destination_peg)
+            self.move(disk_count - 1, source_peg, intermediate_peg, destination_peg, callback)
         destination_peg.push(source_peg.pop())
+        callback([source_peg, destination_peg, intermediate_peg])
         if disk_count > 1:
-            self.move(disk_count - 1, alternate_peg, destination_peg, source_peg)
+            self.move(disk_count - 1, intermediate_peg, destination_peg, source_peg, callback)
 
 if __name__ == '__main__':
     print('TODO')
