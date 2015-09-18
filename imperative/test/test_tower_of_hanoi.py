@@ -3,6 +3,12 @@ import unittest
 from tower_of_hanoi import Disk, Game, Peg
 
 class DiskTestCase(unittest.TestCase):
+    def test____eq____when_self_equals_other__returns_true(self):
+        self.assertEqual(Disk(1), Disk(1))
+
+    def test____eq____when_self_size_not_equals_other__returns_false(self):
+        self.assertNotEqual(Disk(1), Disk(2))
+
     def test____lt____when_self_equals_other__returns_false(self):
         self.assertFalse(Disk(1) < Disk(1))
 
@@ -13,69 +19,85 @@ class DiskTestCase(unittest.TestCase):
         self.assertTrue(Disk(1) < Disk(2))
 
 class PegTestCase(unittest.TestCase):
+    def _create_peg(self, name=None, disks=[]):
+        return Peg(name if None else self._name, disks)
+
     def setUp(self):
         self._disk_1 = Disk(1)
         self._disk_2 = Disk(2)
         self._disk_3 = Disk(3)
-        self._peg = Peg('name')
+        self._name = 'name'
+
+    def test____eq____when_self_equals_other__returns_true(self):
+        self.assertEqual(Peg(self._name, [self._disk_1]), Peg(self._name, [self._disk_1]))
+
+    def test____eq____when_self_disks_not_equals_other__returns_false(self):
+        self.assertNotEqual(Peg(self._name, [self._disk_1]), Peg(self._name, [self._disk_2]))
+
+    def test____eq____when_self_name_not_equals_other__returns_false(self):
+        self.assertNotEqual(Peg(self._name, [self._disk_1]), Peg('other-name', [self._disk_1]))
 
     def test__disks__returns_copy(self):
-        disks = self._peg.disks()
-        disks.append(self._disk_1)
+        peg = self._create_peg()
 
-        self.assertTrue(self._peg.is_empty())
+        peg.disks().append(self._disk_1)
+
+        self.assertEqual([], peg.disks())
 
     def test__disks__returns_in_order_from_bottom_to_top(self):
-        self._peg.push(self._disk_3)
-        self._peg.push(self._disk_2)
-        self._peg.push(self._disk_1)
+        peg = self._create_peg(disks=[self._disk_3, self._disk_2, self._disk_1])
 
-        self.assertEqual([self._disk_3, self._disk_2, self._disk_1], self._peg.disks())
+        self.assertEqual([self._disk_3, self._disk_2, self._disk_1], peg.disks())
 
     def test__is_empty__when_empty__returns_true(self):
-        self.assertTrue(self._peg.is_empty())
+        peg = self._create_peg()
+
+        self.assertTrue(peg.is_empty())
 
     def test__is_empty__when_not_empty__returns_false(self):
-        self._peg.push(self._disk_1)
+        peg = self._create_peg(disks=[self._disk_1])
 
-        self.assertFalse(self._peg.is_empty())
+        self.assertFalse(peg.is_empty())
 
     def test__pop__when_empty__raises_exception(self):
+        peg = self._create_peg()
+
         with self.assertRaises(Exception):
-            self._peg.pop()
+            peg.pop()
 
     def test__pop__when_not_empty__removes_top_disk(self):
-        self._peg.push(self._disk_2)
-        self._peg.push(self._disk_1)
+        peg = self._create_peg(disks=[self._disk_2, self._disk_1])
 
-        popped_disk = self._peg.pop()
+        popped_disk = peg.pop()
 
+        self.assertEqual([self._disk_2], peg.disks())
         self.assertEqual(self._disk_1, popped_disk)
-        self.assertEqual([self._disk_2], self._peg.disks())
 
     def test__push__when_empty__adds_disk(self):
-        self._peg.push(self._disk_1)
+        peg = self._create_peg()
 
-        self.assertEqual([self._disk_1], self._peg.disks())
+        peg.push(self._disk_1)
+
+        self.assertEqual([self._disk_1], peg.disks())
 
     def test__push__when_disk_smaller_than_top_disk__adds_disk_to_top(self):
-        self._peg.push(self._disk_2)
+        peg = self._create_peg(disks=[self._disk_2])
 
-        self._peg.push(self._disk_1)
+        peg.push(self._disk_1)
 
-        self.assertEqual([self._disk_2, self._disk_1], self._peg.disks())
+        self.assertEqual([self._disk_2, self._disk_1], peg.disks())
 
     def test__push__when_disk_same_as_top_disk__raises_exception(self):
-        self._peg.push(self._disk_1)
+        peg = self._create_peg(disks=[self._disk_1])
 
         with self.assertRaises(Exception):
-            self._peg.push(self._disk_1)
+            peg.push(self._disk_1)
 
     def test__push__when_disk_larger_than_top_disk__raises_exception(self):
-        self._peg.push(self._disk_1)
+        peg = self._create_peg(disks=[self._disk_1])
 
         with self.assertRaises(Exception):
-            self._peg.push(self._disk_2)
+            peg.push(self._disk_2)
 
 class GameTestCase(unittest.TestCase):
     class _MoveSpy:
@@ -83,27 +105,34 @@ class GameTestCase(unittest.TestCase):
         A test spy that can be passed as the `callback` parameter of the
         `Game.move` method.
 
-        After `Game.move` returns, the `disks_by_peg_name_for_each_call`
-        attribute will contain the complete history of each peg's content after
-        each move.
+        After `Game.move` returns, the `call_args_list` attribute will contain
+        the complete history of the callback argument list after each call.
         '''
 
         def __init__(self):
-            self.disks_by_peg_name_for_each_call = []
+            self.call_args_list = []
 
         def __call__(self, *args, **kwargs):
             pegs = args[0]
-            disks_by_peg_name = {peg.name(): peg.disks() for peg in pegs}
-            self.disks_by_peg_name_for_each_call.append(disks_by_peg_name)
+            pegs_copy = [Peg(peg.name(), peg.disks()) for peg in pegs]
+            self.call_args_list.append(pegs_copy)
+
+    def _create_peg_a(self, disks):
+        return Peg('a', disks)
+
+    def _create_peg_b(self, disks=[]):
+        return Peg('b', disks)
+
+    def _create_peg_c(self, disks=[]):
+        return Peg('c', disks)
 
     def setUp(self):
         self._disk_1 = Disk(1)
         self._disk_2 = Disk(2)
         self._disk_3 = Disk(3)
         self._disk_4 = Disk(4)
-        self._peg_a = Peg('a')
-        self._peg_b = Peg('b')
-        self._peg_c = Peg('c')
+        self._peg_b = self._create_peg_b()
+        self._peg_c = self._create_peg_c()
         self._game = Game()
 
     def test__create_peg__returns_peg_with_specified_name(self):
@@ -116,106 +145,99 @@ class GameTestCase(unittest.TestCase):
     def test__create_peg__when_disk_count_is_0__returns_empty_peg(self):
         peg = self._game.create_peg('name', 0)
 
-        self.assertTrue(peg.is_empty())
+        self.assertEqual([], peg.disks())
 
     def test__create_peg__when_disk_count_is_1__returns_peg_with_1_disk(self):
         peg = self._game.create_peg('name', 1)
 
-        self.assertEqual([1], [disk.size() for disk in peg.disks()])
+        self.assertEqual([self._disk_1], peg.disks())
 
     def test__create_peg__when_disk_count_is_3__returns_peg_with_3_disks_in_ascending_order_from_top(self):
         peg = self._game.create_peg('name', 3)
 
-        self.assertEqual([3, 2, 1], [disk.size() for disk in peg.disks()])
+        self.assertEqual([self._disk_3, self._disk_2, self._disk_1], peg.disks())
 
     def test__move__when_disk_count_is_1__invokes_callback_after_each_move(self):
         move_spy = GameTestCase._MoveSpy()
-        self._peg_a.push(self._disk_1)
+        peg_a = self._create_peg_a([self._disk_1])
 
-        self._game.move(1, self._peg_a, self._peg_c, self._peg_b, move_spy)
+        self._game.move(1, peg_a, self._peg_c, self._peg_b, move_spy)
 
-        expected_disks_by_peg_name_for_each_call = [
-            {
-                self._peg_a.name(): [],
-                self._peg_b.name(): [],
-                self._peg_c.name(): [self._disk_1]
-            }
+        expected_move_spy_call_args_list = [
+            [
+                self._create_peg_a([]),
+                self._create_peg_c([self._disk_1]),
+                self._create_peg_b([])
+            ]
         ]
-        self.assertEqual(expected_disks_by_peg_name_for_each_call, move_spy.disks_by_peg_name_for_each_call)
+        self.assertEqual(expected_move_spy_call_args_list, move_spy.call_args_list)
 
     def test__move__when_disk_count_is_1__moves_disks_from_peg_a_to_peg_c(self):
-        self._peg_a.push(self._disk_1)
+        peg_a = self._create_peg_a([self._disk_1])
 
-        self._game.move(1, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(1, peg_a, self._peg_c, self._peg_b)
 
-        self.assertEqual([], self._peg_a.disks())
-        self.assertEqual([], self._peg_b.disks())
-        self.assertEqual([self._disk_1], self._peg_c.disks())
+        self.assertEqual(self._create_peg_a([]), peg_a)
+        self.assertEqual(self._create_peg_b([]), self._peg_b)
+        self.assertEqual(self._create_peg_c([self._disk_1]), self._peg_c)
 
     def test__move__when_disk_count_is_2__invokes_callback_after_each_move(self):
         move_spy = GameTestCase._MoveSpy()
-        self._peg_a.push(self._disk_2)
-        self._peg_a.push(self._disk_1)
+        peg_a = self._create_peg_a([self._disk_2, self._disk_1])
 
-        self._game.move(2, self._peg_a, self._peg_c, self._peg_b, move_spy)
+        self._game.move(2, peg_a, self._peg_c, self._peg_b, move_spy)
 
-        expected_disks_by_peg_name_for_each_call = [
-            {
-                self._peg_a.name(): [self._disk_2],
-                self._peg_b.name(): [self._disk_1],
-                self._peg_c.name(): []
-            },
-            {
-                self._peg_a.name(): [],
-                self._peg_b.name(): [self._disk_1],
-                self._peg_c.name(): [self._disk_2]
-            },
-            {
-                self._peg_a.name(): [],
-                self._peg_b.name(): [],
-                self._peg_c.name(): [self._disk_2, self._disk_1]
-            }
+        expected_move_spy_call_args_list = [
+            [
+                self._create_peg_a([self._disk_2]),
+                self._create_peg_b([self._disk_1]),
+                self._create_peg_c([])
+            ],
+            [
+                self._create_peg_a([]),
+                self._create_peg_c([self._disk_2]),
+                self._create_peg_b([self._disk_1])
+            ],
+            [
+                self._create_peg_b([]),
+                self._create_peg_c([self._disk_2, self._disk_1]),
+                self._create_peg_a([])
+            ]
         ]
-        self.assertEqual(expected_disks_by_peg_name_for_each_call, move_spy.disks_by_peg_name_for_each_call)
+        self.assertEqual(expected_move_spy_call_args_list, move_spy.call_args_list)
 
     def test__move__when_disk_count_is_2__moves_disks_from_peg_a_to_peg_c(self):
-        self._peg_a.push(self._disk_2)
-        self._peg_a.push(self._disk_1)
+        peg_a = self._create_peg_a([self._disk_2, self._disk_1])
 
-        self._game.move(2, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(2, peg_a, self._peg_c, self._peg_b)
 
-        self.assertEqual([], self._peg_a.disks())
-        self.assertEqual([], self._peg_b.disks())
-        self.assertEqual([self._disk_2, self._disk_1], self._peg_c.disks())
+        self.assertEqual(self._create_peg_a([]), peg_a)
+        self.assertEqual(self._create_peg_b([]), self._peg_b)
+        self.assertEqual(self._create_peg_c([self._disk_2, self._disk_1]), self._peg_c)
 
     def test__move__when_disk_count_is_3__moves_disks_from_peg_a_to_peg_c(self):
-        self._peg_a.push(self._disk_3)
-        self._peg_a.push(self._disk_2)
-        self._peg_a.push(self._disk_1)
+        peg_a = self._create_peg_a([self._disk_3, self._disk_2, self._disk_1])
 
-        self._game.move(3, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(3, peg_a, self._peg_c, self._peg_b)
 
-        self.assertEqual([], self._peg_a.disks())
-        self.assertEqual([], self._peg_b.disks())
-        self.assertEqual([self._disk_3, self._disk_2, self._disk_1], self._peg_c.disks())
+        self.assertEqual(self._create_peg_a([]), peg_a)
+        self.assertEqual(self._create_peg_b([]), self._peg_b)
+        self.assertEqual(self._create_peg_c([self._disk_3, self._disk_2, self._disk_1]), self._peg_c)
 
     def test__move__when_disk_count_is_4__moves_disks_from_peg_a_to_peg_c(self):
-        self._peg_a.push(self._disk_4)
-        self._peg_a.push(self._disk_3)
-        self._peg_a.push(self._disk_2)
-        self._peg_a.push(self._disk_1)
+        peg_a = self._create_peg_a([self._disk_4, self._disk_3, self._disk_2, self._disk_1])
 
-        self._game.move(4, self._peg_a, self._peg_c, self._peg_b)
+        self._game.move(4, peg_a, self._peg_c, self._peg_b)
 
-        self.assertEqual([], self._peg_a.disks())
-        self.assertEqual([], self._peg_b.disks())
-        self.assertEqual([self._disk_4, self._disk_3, self._disk_2, self._disk_1], self._peg_c.disks())
+        self.assertEqual(self._create_peg_a([]), peg_a)
+        self.assertEqual(self._create_peg_b([]), self._peg_b)
+        self.assertEqual(self._create_peg_c([self._disk_4, self._disk_3, self._disk_2, self._disk_1]), self._peg_c)
 
     def test__move__when_disk_count_exceeds_source_peg_disk_count__raises_exception(self):
-        self._peg_a.push(self._disk_1)
+        peg_a = self._create_peg_a([self._disk_1])
 
         with self.assertRaises(Exception):
-            self._game.move(2, self._peg_a, self._peg_c, self._peg_b)
+            self._game.move(2, peg_a, self._peg_c, self._peg_b)
 
 if __name__ == '__main__':
     unittest.main()

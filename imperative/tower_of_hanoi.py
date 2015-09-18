@@ -15,8 +15,14 @@ class Disk:
 
         self._size = size
 
+    def __eq__(self, other):
+        return self._size == other._size
+
     def __lt__(self, other):
         return self._size < other._size
+
+    def __repr__(self):
+        return 'Disk(size={size})'.format(size=self._size)
 
     def size(self):
         '''
@@ -34,15 +40,23 @@ class Peg:
     Disks may only be stacked in order of decreasing size.
     '''
 
-    def __init__(self, name):
+    def __init__(self, name, disks=[]):
         '''
         Initializes a new instance of the `Peg' class.
 
         :param name: The peg name.
+        :param disks: The optional sequence of disks on the peg ordered from
+            bottom to top.  Defaults to an empty sequence.
         '''
 
-        self._disks = []
+        self._disks = disks[:]
         self._name = name
+
+    def __eq__(self, other):
+        return (self._name == other._name) and (self._disks == other._disks)
+
+    def __repr__(self):
+        return 'Peg(name={name}, disks={disks})'.format(name=self._name, disks=self._disks)
 
     def _is_smaller_than_top_disk(self, disk):
         return True if self.is_empty() else disk < self._peek()
