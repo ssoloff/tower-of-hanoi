@@ -163,7 +163,7 @@ class Game:
         :param callback: The optional callback to be invoked *after* each disk
             is moved.  The callback will receive a sequence of all pegs in no
             particular order.
-        
+
         :returns: A tuple containing the new source, destination, and
             intermediate pegs that reflect the result of the move.
         '''
