@@ -1,4 +1,5 @@
 import unittest
+import unittest.mock as mock
 
 from tower_of_hanoi import Disk, Game, Peg
 
@@ -100,22 +101,21 @@ class PegTestCase(unittest.TestCase):
             peg.push(self._disk_2)
 
 class GameTestCase(unittest.TestCase):
-    class _MoveSpy:
+    class _MoveSpy(mock.Mock):
         '''
         A test spy that can be passed as the `callback` parameter of the
         `Game.move` method.
 
-        After `Game.move` returns, the `call_args_list` attribute will contain
-        the complete history of the callback argument list after each call.
+        Because `Peg`s are mutable, we must copy the peg arguments during each
+        call instead of storing them directly.  Otherwise, all calls will
+        reflect the final state of the pegs.
         '''
 
-        def __init__(self):
-            self.call_args_list = []
-
-        def __call__(self, *args, **kwargs):
-            pegs = args[0]
-            pegs_copy = [Peg(peg.name(), peg.disks()) for peg in pegs]
-            self.call_args_list.append(pegs_copy)
+        def _mock_call(self, *args, **kwargs):
+            import copy
+            args_copy = copy.deepcopy(args)
+            kwargs_copy = copy.deepcopy(kwargs)
+            return super()._mock_call(*args_copy, **kwargs_copy)
 
     def _create_peg_a(self, disks):
         return Peg('a', disks)
@@ -164,11 +164,11 @@ class GameTestCase(unittest.TestCase):
         self._game.move(1, peg_a, self._peg_c, self._peg_b, move_spy)
 
         expected_move_spy_call_args_list = [
-            [
+            mock.call([
                 self._create_peg_a([]),
                 self._create_peg_c([self._disk_1]),
                 self._create_peg_b([])
-            ]
+            ])
         ]
         self.assertEqual(expected_move_spy_call_args_list, move_spy.call_args_list)
 
@@ -188,21 +188,21 @@ class GameTestCase(unittest.TestCase):
         self._game.move(2, peg_a, self._peg_c, self._peg_b, move_spy)
 
         expected_move_spy_call_args_list = [
-            [
+            mock.call([
                 self._create_peg_a([self._disk_2]),
                 self._create_peg_b([self._disk_1]),
                 self._create_peg_c([])
-            ],
-            [
+            ]),
+            mock.call([
                 self._create_peg_a([]),
                 self._create_peg_c([self._disk_2]),
                 self._create_peg_b([self._disk_1])
-            ],
-            [
+            ]),
+            mock.call([
                 self._create_peg_b([]),
                 self._create_peg_c([self._disk_2, self._disk_1]),
                 self._create_peg_a([])
-            ]
+            ])
         ]
         self.assertEqual(expected_move_spy_call_args_list, move_spy.call_args_list)
 
