@@ -41,14 +41,14 @@ class Peg:
         :param name: The peg name.
         '''
 
+        self._disks = []
         self._name = name
-        self._stack = []
 
     def _is_smaller_than_top_disk(self, disk):
         return True if self.is_empty() else disk < self._peek()
 
     def _peek(self):
-        return self._stack[-1]
+        return self._disks[-1]
 
     def disks(self):
         '''
@@ -57,7 +57,7 @@ class Peg:
         :returns: A sequence of disks on the peg ordered from bottom to top.
         '''
 
-        return self._stack[:]
+        return self._disks[:]
 
     def is_empty(self):
         '''
@@ -66,7 +66,7 @@ class Peg:
         :returns: `True` if the peg is empty; otherwise `False`.
         '''
 
-        return len(self._stack) == 0
+        return len(self._disks) == 0
 
     def name(self):
         '''
@@ -89,7 +89,7 @@ class Peg:
         if self.is_empty():
             raise Exception('peg is empty')
 
-        return self._stack.pop()
+        return self._disks.pop()
 
     def push(self, disk):
         '''
@@ -104,7 +104,7 @@ class Peg:
         if not self._is_smaller_than_top_disk(disk):
             raise Exception('disk must be smaller than top disk')
 
-        self._stack.append(disk)
+        self._disks.append(disk)
 
 class Game:
     '''
