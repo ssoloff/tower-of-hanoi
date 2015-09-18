@@ -142,19 +142,19 @@ class GameTestCase(unittest.TestCase):
         self.assertEqual([self._disk_3, self._disk_2, self._disk_1], peg.disks())
 
     def test__move__when_disk_count_is_1__invokes_callback_after_each_move(self):
-        mock_callback = mock.Mock()
+        move_spy = mock.Mock()
         peg_a = self._create_peg_a([self._disk_1])
 
-        self._game.move(1, peg_a, self._peg_c, self._peg_b, mock_callback)
+        self._game.move(1, peg_a, self._peg_c, self._peg_b, move_spy)
 
-        expected_mock_callback_call_args_list = [
+        expected_move_spy_call_args_list = [
             mock.call([
                 self._create_peg_a([]),
                 self._create_peg_c([self._disk_1]),
                 self._create_peg_b([])
             ])
         ]
-        self.assertEqual(expected_mock_callback_call_args_list, mock_callback.call_args_list)
+        self.assertEqual(expected_move_spy_call_args_list, move_spy.call_args_list)
 
     def test__move__when_disk_count_is_1__moves_disks_from_peg_a_to_peg_c(self):
         peg_a = self._create_peg_a([self._disk_1])
@@ -166,12 +166,12 @@ class GameTestCase(unittest.TestCase):
         self.assertEqual(self._create_peg_c([self._disk_1]), new_peg_c)
 
     def test__move__when_disk_count_is_2__invokes_callback_after_each_move(self):
-        mock_callback = mock.Mock()
+        move_spy = mock.Mock()
         peg_a = self._create_peg_a([self._disk_2, self._disk_1])
 
-        self._game.move(2, peg_a, self._peg_c, self._peg_b, mock_callback)
+        self._game.move(2, peg_a, self._peg_c, self._peg_b, move_spy)
 
-        expected_mock_callback_call_args_list = [
+        expected_move_spy_call_args_list = [
             mock.call([
                 self._create_peg_a([self._disk_2]),
                 self._create_peg_b([self._disk_1]),
@@ -188,7 +188,7 @@ class GameTestCase(unittest.TestCase):
                 self._create_peg_a([])
             ])
         ]
-        self.assertSequenceEqual(expected_mock_callback_call_args_list, mock_callback.call_args_list)
+        self.assertSequenceEqual(expected_move_spy_call_args_list, move_spy.call_args_list)
 
     def test__move__when_disk_count_is_2__moves_disks_from_peg_a_to_peg_c(self):
         peg_a = self._create_peg_a([self._disk_2, self._disk_1])
