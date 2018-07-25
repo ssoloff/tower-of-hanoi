@@ -14,7 +14,7 @@ def print_pegs(pegs):
 
 if len(sys.argv) != 2:
     print('Usage: {0} <disk_count>'.format(sys.argv[0]))
-    sys,exit(1)
+    sys.exit(1)
 
 disk_count = int(sys.argv[1])
 assert disk_count > 0
